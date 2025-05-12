@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <path mask="url(https://example.com/using-path-mask-attribute)"></path>
+    </defs>
+
+    <circle fill="url(https://example.com/using-circle-fill-attribute)"></circle>
+    <circle style="fill: url(https://example.com/using-circle-fill-inline-style)"></circle>
+
+    <rect stroke="url(https://example.com/using-rect-stroke-attribute)"></rect>
+    <rect style="stroke: url(https://example.com/using-rect-fill-inline-style)"></rect>
+
+    <style>.url{}</style>
+    <rect class="url"></rect>
+
+    <style>@font-face{font-family:'Test Font'}text{font-family:'Test Font'}</style>
+    <text y="20" x="10">Use developer tools to observe several requests to example.com</text>
+</svg>

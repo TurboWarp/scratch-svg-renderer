@@ -8,17 +8,20 @@ const DOMPurify = require('dompurify');
 
 const sanitizeSvg = {};
 
+/**
+ * @param {string} url Unknown URL
+ * @returns {boolean} True if safe (ie. no risk of leaking IP)
+ */
+const isSafeURL = url => url.startsWith('#') || url.startsWith('data:');
+
 // addHook() is undefined when running in an unsupported environment (eg. Node)
 if (DOMPurify.isSupported) {
     DOMPurify.addHook(
         'beforeSanitizeAttributes',
         currentNode => {
-    
             if (currentNode && currentNode.href && currentNode.href.baseVal) {
                 const href = currentNode.href.baseVal.replace(/\s/g, '');
-                // "data:" and "#" are valid hrefs
-                if ((href.slice(0, 5) !== 'data:') && (href.slice(0, 1) !== '#')) {
-    
+                if (!isSafeURL(href)) {
                     if (currentNode.attributes.getNamedItem('xlink:href')) {
                         currentNode.attributes.removeNamedItem('xlink:href');
                         delete currentNode['xlink:href'];
@@ -29,6 +32,7 @@ if (DOMPurify.isSupported) {
                     }
                 }
             }
+
             return currentNode;
         }
     );
@@ -39,13 +43,34 @@ if (DOMPurify.isSupported) {
             if (data.tagName === 'style') {
                 const ast = parse(node.textContent);
                 let isModified = false;
-                // Remove any @import rules as it could leak HTTP requests
+
                 walk(ast, (astNode, item, list) => {
+                    let shouldRemove = false;
+
+                    // Remove any @import rules.
                     if (astNode.type === 'Atrule' && astNode.name === 'import') {
-                        list.remove(item);
+                        shouldRemove = true;
+                    }
+
+                    // Remove style declarations that use unsafe url().
+                    if (astNode.type === 'Declaration') {
+                        let hasURL = false;
+                        walk(astNode.value, childNode => {
+                            if (childNode.type === 'Url' && !isSafeURL(childNode.value.value)) {
+                                hasURL = true;
+                            }
+                        });
+                        if (hasURL) {
+                            shouldRemove = true;
+                        }
+                    }
+
+                    if (shouldRemove) {
                         isModified = true;
+                        list.remove(item);
                     }
                 });
+
                 if (isModified) {
                     node.textContent = generate(ast);
                 }
