@@ -8,32 +8,78 @@ const DOMPurify = require('dompurify');
 
 const sanitizeSvg = {};
 
+/* eslint-disable valid-jsdoc */
+
 /**
  * @param {string} url Unknown URL
  * @returns {boolean} True if safe (ie. no risk of leaking IP)
  */
 const isSafeURL = url => url.startsWith('#') || url.startsWith('data:');
 
+/**
+ * @param {import('css-tree').CssNode} astNode css-tree node from AST.
+ * @returns {boolean} true if the node contains remote content.
+ */
+const hasRemoteContent = astNode => {
+    let result = false;
+    walk(astNode, childNode => {
+        if (childNode.type === 'Url' && !isSafeURL(childNode.value.value)) {
+            result = true;
+        }
+    });
+    return result;
+};
+
 // addHook() is undefined when running in an unsupported environment (eg. Node)
 if (DOMPurify.isSupported) {
     DOMPurify.addHook(
         'beforeSanitizeAttributes',
         currentNode => {
-            if (currentNode && currentNode.href && currentNode.href.baseVal) {
-                const href = currentNode.href.baseVal.replace(/\s/g, '');
-                if (!isSafeURL(href)) {
-                    if (currentNode.attributes.getNamedItem('xlink:href')) {
-                        currentNode.attributes.removeNamedItem('xlink:href');
-                        delete currentNode['xlink:href'];
+            /** @type {NamedNodeMap|undefined} */
+            const attributes = currentNode.attributes;
+            if (!attributes) {
+                return;
+            }
+
+            const namesToRemove = new Set();
+
+            for (const attribute of attributes) {
+                let shouldRemoveAttribute = false;
+
+                if (attribute.name === 'href' || attribute.name === 'xlink:href') {
+                    const href = attribute.value.replace(/\s/g, '');
+                    if (!isSafeURL(href)) {
+                        shouldRemoveAttribute = true;
                     }
-                    if (currentNode.attributes.getNamedItem('href')) {
-                        currentNode.attributes.removeNamedItem('href');
-                        delete currentNode.href;
+                }
+
+                if (attribute.name === 'style') {
+                    const ast = parse(attribute.value, {
+                        context: 'declarationList'
+                    });
+
+                    let isModified = false;
+                    walk(ast, (astNode, item, list) => {
+                        if (astNode.type === 'Declaration' && hasRemoteContent(astNode.value)) {
+                            list.remove(item);
+                            isModified = true;
+                        }
+                    });
+
+                    if (isModified) {
+                        attribute.value = generate(ast);
                     }
+                }
+
+                if (shouldRemoveAttribute) {
+                    // Avoid modifing attributes while we iterate; seems unsafe
+                    namesToRemove.add(attribute.name);
                 }
             }
 
-            return currentNode;
+            for (const name of namesToRemove) {
+                attributes.removeNamedItem(name);
+            }
         }
     );
 
@@ -45,27 +91,19 @@ if (DOMPurify.isSupported) {
                 let isModified = false;
 
                 walk(ast, (astNode, item, list) => {
-                    let shouldRemove = false;
+                    let shouldRemoveNode = false;
 
                     // Remove any @import rules.
                     if (astNode.type === 'Atrule' && astNode.name === 'import') {
-                        shouldRemove = true;
+                        shouldRemoveNode = true;
                     }
 
                     // Remove style declarations that use unsafe url().
-                    if (astNode.type === 'Declaration') {
-                        let hasURL = false;
-                        walk(astNode.value, childNode => {
-                            if (childNode.type === 'Url' && !isSafeURL(childNode.value.value)) {
-                                hasURL = true;
-                            }
-                        });
-                        if (hasURL) {
-                            shouldRemove = true;
-                        }
+                    if (astNode.type === 'Declaration' && hasRemoteContent(astNode.value)) {
+                        shouldRemoveNode = true;
                     }
 
-                    if (shouldRemove) {
+                    if (shouldRemoveNode) {
                         isModified = true;
                         list.remove(item);
                     }

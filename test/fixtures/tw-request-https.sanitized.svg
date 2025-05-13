@@ -4,10 +4,10 @@
     </defs>
 
     <circle fill="url(https://example.com/using-circle-fill-attribute)"></circle>
-    <circle style="fill: url(https://example.com/using-circle-fill-inline-style)"></circle>
+    <circle style=""></circle>
 
     <rect stroke="url(https://example.com/using-rect-stroke-attribute)"></rect>
-    <rect style="stroke: url(https://example.com/using-rect-fill-inline-style)"></rect>
+    <rect style=""></rect>
 
     <style>.url{}</style>
     <rect class="url"></rect>
