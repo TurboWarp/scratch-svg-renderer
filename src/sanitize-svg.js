@@ -51,9 +51,7 @@ if (DOMPurify.isSupported) {
                     if (!isSafeURL(href)) {
                         shouldRemoveAttribute = true;
                     }
-                }
-
-                if (attribute.name === 'style') {
+                } else if (attribute.name === 'style') {
                     const ast = parse(attribute.value, {
                         context: 'declarationList'
                     });
@@ -68,6 +66,18 @@ if (DOMPurify.isSupported) {
 
                     if (isModified) {
                         attribute.value = generate(ast);
+                    }
+                } else {
+                    // Other attributes like fill, stroke, mask take a CSS value.
+                    try {
+                        const ast = parse(attribute.value, {
+                            context: 'value'
+                        });
+                        if (hasRemoteContent(ast)) {
+                            shouldRemoveAttribute = true;
+                        }
+                    } catch (e) {
+                        // probably fine?
                     }
                 }
 

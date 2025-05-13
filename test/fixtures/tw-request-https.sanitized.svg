@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg">
     <defs>
-        <path mask="url(https://example.com/using-path-mask-attribute)"></path>
+        <path></path>
     </defs>
 
-    <circle fill="url(https://example.com/using-circle-fill-attribute)"></circle>
+    <circle></circle>
     <circle style=""></circle>
 
-    <rect stroke="url(https://example.com/using-rect-stroke-attribute)"></rect>
+    <rect></rect>
     <rect style=""></rect>
 
     <style>.url{}</style>
