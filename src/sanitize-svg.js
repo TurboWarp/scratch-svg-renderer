@@ -23,7 +23,7 @@ const isSafeURL = url => url.startsWith('#') || url.startsWith('data:');
 const hasRemoteContent = astNode => {
     let result = false;
     walk(astNode, childNode => {
-        if (childNode.type === 'Url' && !isSafeURL(childNode.value.value)) {
+        if (childNode.type === 'Url' && !isSafeURL(childNode.value)) {
             result = true;
         }
     });
@@ -46,12 +46,12 @@ if (DOMPurify.isSupported) {
             for (const attribute of attributes) {
                 let shouldRemoveAttribute = false;
 
-                if (attribute.name === 'href' || attribute.name === 'xlink:href') {
+                if (attribute.localName === 'href') {
                     const href = attribute.value.replace(/\s/g, '');
                     if (!isSafeURL(href)) {
                         shouldRemoveAttribute = true;
                     }
-                } else if (attribute.name === 'style') {
+                } else if (attribute.localName === 'style') {
                     const ast = parse(attribute.value, {
                         context: 'declarationList'
                     });

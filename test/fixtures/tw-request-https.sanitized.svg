@@ -12,6 +12,6 @@
     <style>.url{}</style>
     <rect class="url"></rect>
 
-    <style>@font-face{font-family:'Test Font'}text{font-family:'Test Font'}</style>
+    <style>@font-face{font-family:"Test Font"}text{font-family:"Test Font"}</style>
     <text y="20" x="10">Use developer tools to observe several requests to example.com</text>
 </svg>

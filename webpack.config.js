@@ -17,12 +17,13 @@ const base = {
         rules: [{
             include: [
                 path.resolve('src'),
-                path.resolve('node_modules', 'scratch-render-fonts')
+                path.resolve('node_modules', 'scratch-render-fonts'),
+                path.resolve('node_modules', 'css-tree')
             ],
             test: /\.js$/,
             loader: 'babel-loader',
             options: {
-                presets: [['env', {targets: {}}]]
+                presets: [['@babel/preset-env', {targets: {}}]]
             }
         }]
     },
