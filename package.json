@@ -1,6 +1,6 @@
 {
   "name": "@turbowarp/scratch-svg-renderer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SVG renderer for Scratch",
   "main": "./src/index.js",
   "scripts": {
